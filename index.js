@@ -20,6 +20,7 @@ var stats = document.querySelector('#stats-section');
 var gameOverBox = document.querySelector('#game-over-section');
 var gameOverGuessCount = document.querySelector('#game-over-guesses-count');
 var gameOverGuessGrammar = document.querySelector('#game-over-guesses-plural');
+var gameLostBox = document.querySelector('#game-lost-section');
 
 // Event Listeners
 window.addEventListener('load', setGame);
@@ -75,7 +76,9 @@ function moveToNextInput(e) {
 
   if( key !== 8 && key !== 46 ) {
     var indexOfNext = parseInt(e.target.id.split('-')[2]) + 1;
-    inputs[indexOfNext].focus();
+    if(indexOfNext < 30) {
+      inputs[indexOfNext].focus();
+    }
   }
 }
 
@@ -99,9 +102,13 @@ function submitGuess() {
     errorMessage.innerText = '';
     compareGuess();
     if (checkForWin()) {
-      setTimeout(declareWinner, 1000);
+      setTimeout(declareWinner, 500);
     } else {
-      changeRow();
+      if(currentRow === 6){
+        setTimeout(declareLoser, 500);
+      }else {
+        changeRow();
+      }
     }
   } else {
     errorMessage.innerText = 'Not a valid word. Try again!';
@@ -173,14 +180,20 @@ function changeRow() {
 }
 
 function declareWinner() {
-  recordGameStats();
+  recordGameStats(true);
   changeGameOverText();
-  viewGameOverMessage();
+  viewGameOverMessage(true);
   setTimeout(startNewGame, 4000);
 }
 
-function recordGameStats() {
-  gamesPlayed.push({ solved: true, guesses: currentRow });
+function declareLoser() {
+  recordGameStats(false);
+  viewGameOverMessage(false);
+  setTimeout(startNewGame, 4000);
+}
+
+function recordGameStats(won) {
+  gamesPlayed.push({ solved: won, guesses: currentRow });
 }
 
 function changeGameOverText() {
@@ -230,7 +243,8 @@ function viewGame() {
   gameBoard.classList.remove('collapsed');
   rules.classList.add('collapsed');
   stats.classList.add('collapsed');
-  gameOverBox.classList.add('collapsed')
+  gameOverBox.classList.add('collapsed');
+  gameLostBox.classList.add('collapsed');
   viewGameButton.classList.add('active');
   viewRulesButton.classList.remove('active');
   viewStatsButton.classList.remove('active');
@@ -246,8 +260,12 @@ function viewStats() {
   viewStatsButton.classList.add('active');
 }
 
-function viewGameOverMessage() {
-  gameOverBox.classList.remove('collapsed')
+function viewGameOverMessage(won) {
+  if(won) {
+    gameOverBox.classList.remove('collapsed');
+  }else {
+    gameLostBox.classList.remove('collapsed');
+  }
   letterKey.classList.add('hidden');
   gameBoard.classList.add('collapsed');
 }
