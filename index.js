@@ -2,7 +2,6 @@
 var winningWord = '';
 var currentRow = 1;
 var guess = '';
-var gamesPlayed = [];
 var words;
 
 // Query Selectors
@@ -141,7 +140,6 @@ function compareGuess() {
       updateKeyColor(guessLetter, 'wrong-key');
     }
   })
-
 }
 
 function updateBoxColor(letterLocation, className) {
@@ -191,23 +189,14 @@ function declareLoser() {
 }
 
 function recordGameStats(won) {
-  gamesPlayed.push({ solved: won, guesses: currentRow });
-  changeStatsText();
-}
-
-function changeStatsText() {
-  if(gamesPlayed.length) {
-    statsTotalGames.innerText = gamesPlayed.length;
-    statsPercentCorrect.innerText = Math.round((gamesPlayed.filter(game => game.solved).length / gamesPlayed.length) * 100)
-    statsAverageGuesses.innerText = Math.round(gamesPlayed.reduce((acc, game) => {
-      acc += game.guesses;
-      return acc;
-    }, 0) / gamesPlayed.length);
-  } else {
-    statsTotalGames.innerText = '0';
-    statsPercentCorrect.innerText = '';
-    statsAverageGuesses.innerText = '';
-  }
+  fetch('http://localhost:3001/api/v1/games', {
+    method: 'POST',
+    headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ solved: won, guesses: currentRow })
+  })
 }
 
 function changeGameOverText() {
@@ -263,13 +252,19 @@ function viewGame() {
 }
 
 function viewStats() {
-  letterKey.classList.add('hidden');
-  gameBoard.classList.add('collapsed');
-  rules.classList.add('collapsed');
-  stats.classList.remove('collapsed');
-  viewGameButton.classList.remove('active');
-  viewRulesButton.classList.remove('active');
-  viewStatsButton.classList.add('active');
+  fetch('http://localhost:3001/api/v1/games')
+    .then(response => response.json())
+    .then(gamesPlayed => {
+      console.log(gamesPlayed)
+      changeStatsText(gamesPlayed);
+      letterKey.classList.add('hidden');
+      gameBoard.classList.add('collapsed');
+      rules.classList.add('collapsed');
+      stats.classList.remove('collapsed');
+      viewGameButton.classList.remove('active');
+      viewRulesButton.classList.remove('active');
+      viewStatsButton.classList.add('active');
+    })
 }
 
 function viewGameOverMessage(won) {
@@ -280,4 +275,19 @@ function viewGameOverMessage(won) {
   }
   letterKey.classList.add('hidden');
   gameBoard.classList.add('collapsed');
+}
+
+function changeStatsText(gamesPlayed) {
+  if(gamesPlayed.length) {
+    statsTotalGames.innerText = gamesPlayed.length;
+    statsPercentCorrect.innerText = Math.round((gamesPlayed.filter(game => game.solved).length / gamesPlayed.length) * 100)
+    statsAverageGuesses.innerText = Math.round(gamesPlayed.reduce((acc, game) => {
+      acc += game.numGuesses;
+      return acc;
+    }, 0) / gamesPlayed.length);
+  } else {
+    statsTotalGames.innerText = '0';
+    statsPercentCorrect.innerText = '';
+    statsAverageGuesses.innerText = '';
+  }
 }
